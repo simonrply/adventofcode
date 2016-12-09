@@ -13,9 +13,7 @@ lineToRoom input = Room name sectorId checksum
         indexCheck = fromJust $ elemIndex '[' input
         sectorId = read $ drop (indexCheck - 3) $ take indexCheck input :: Int 
         checksum = init $ drop (indexCheck + 1) input
-        name = foldl (\list char -> case char of
-            '-' -> list
-            _ -> char : list)  "" (take (indexCheck - 4) input)
+        name = (take (indexCheck - 4) input)
 
 
 linesToRoomList :: String -> [Room]
@@ -27,7 +25,9 @@ solution list = foldl (\x (Room name roomId checksum) -> case (real name checksu
     False -> x) 0 list
  
 mostCommon :: String -> Map.Map Char Int
-mostCommon name = foldl (\list char -> Map.insertWith (+)  char 1 list) Map.empty name
+mostCommon name = foldl (\list char -> case char of
+    '-' -> list
+    _ -> Map.insertWith (+)  char 1 list) Map.empty name
         
 mostCommonFormated :: Map.Map Char Int -> [Char]
 mostCommonFormated input = foldl (\list element -> list ++ [fst element] ) [] (take 5 $ sortOn f list)
@@ -38,7 +38,20 @@ mostCommonFormated input = foldl (\list element -> list ++ [fst element] ) [] (t
 real :: String -> String -> Bool
 real name checksum = (mostCommonFormated $ mostCommon name) == checksum  
 
-  
+
+rotate :: Char -> Char
+rotate '-' = ' '
+rotate ' ' = ' '  
+rotate char = chr ((((ord char) - 97 + 1) `mod` 26) + 97) 
+    
+rotateX :: Int -> Char -> Char
+rotateX 0 char = char
+rotateX x char = rotateX (x - 1) (rotate char)
+
+decryptName :: Room -> Room
+decryptName (Room name sectorId checksum) = Room (map (\element -> rotateX sectorId element) name) sectorId checksum
+
+
 file = "input.txt"
 
 main :: IO ()
